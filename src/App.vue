@@ -128,9 +128,13 @@ watch(arriveByMinutes, () => {
           <h1 class="result">There is no scheduled arrival early enough.</h1>
         </template>
     </div>
+
+    <FullSchedule />
+
+    <span class="subtext">This page is designed to work without an internet connection. Your browser should save all the information it needs.</span>
+    <h4>Want to improve this site? <a class="gh" href="https://github.com/barnabwhy/swansea-u1-timetable">Make a pull request on GitHub!</a></h4>
   </div>
 
-  <FullSchedule />
 </template>
 
 <style scoped>
@@ -197,5 +201,15 @@ watch(arriveByMinutes, () => {
 .result {
   margin-bottom: 0;
   margin-top: 2rem;
+}
+
+.subtext {
+  color: #cccccc;
+  font-size: 0.75rem;
+}
+
+.gh {
+  color: white;
+  font-weight: normal;
 }
 </style>
