@@ -163,7 +163,7 @@ watch(arriveByMinutes, () => {
   flex: 1;
   min-width: 24rem;
 }
-@media only screen and (max-width: 24rem) {
+@media only screen and (max-width: 28rem) {
   .mode-select > button, .dest-select > button {
     min-width: 100%;
     width: 100%;
