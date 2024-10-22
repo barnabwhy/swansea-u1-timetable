@@ -141,8 +141,38 @@ export const schedule: ScheduleEntry[] = [
     { dep: { h: 18, m: 48 }, arr: { h: 18, m: 54 }, dest: Destination.PARK_AND_RIDE },
 ];
 
+function getOffset(timeZone: string): number {
+    const timeZoneName = Intl.DateTimeFormat("uk", {
+      timeZoneName: "short",
+      timeZone,
+    })
+      .formatToParts()
+      .find((i) => i.type === "timeZoneName");
+
+    if (!timeZoneName) throw `cannot parse timezone: ${timeZone}`;
+
+    const offset = timeZoneName.value.slice(3);
+    if (!offset) return 0;
+
+    const matchData = offset.match(/([+-])(\d+)(?::(\d+))?/);
+    if (!matchData) throw `cannot parse timezone name: ${timeZoneName}`;
+
+    const [, sign, hour, minute] = matchData;
+    let result = parseInt(hour) * 60;
+    if (sign === "+") result *= -1;
+    if (minute) result += parseInt(minute);
+
+    return result;
+};
+
 export function getNextDeparture(dest: Destination, now: Date): ScheduleEntry | null {
-    const nowTime = { h: now.getHours(), m: now.getMinutes() };
+    // Correct for timezones
+    let timezoneDiff = getOffset("Europe/London") - now.getTimezoneOffset();
+
+    let timezoneDiffHours = Math.floor(timezoneDiff / 60);
+    let timezoneDiffMinutes = timezoneDiff % 60;
+
+    const nowTime = { h: now.getHours() - timezoneDiffHours, m: now.getMinutes() - timezoneDiffMinutes };
 
     // Find the next departure
     for (let i = 0; i < schedule.length; i++) {
