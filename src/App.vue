@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Destination, DESTINATIONS, getLastDepartureBefore, getNextDeparture, oppositeOf, timeString, timeUntilDeparture } from './data/schedule';
 import FullSchedule from './components/FullSchedule.vue';
 
@@ -62,10 +62,37 @@ const departEarlyEnoughTime = computed(() => {
   }
 });
 
+watch(arriveByHours, () => {
+  if (typeof arriveByHours.value === 'string') {
+    arriveByHours.value = 0;
+  }
+
+  if (arriveByHours.value < 0) {
+    arriveByHours.value = 0;
+  } else if (arriveByHours.value > 23) {
+    arriveByHours.value = 23;
+  }
+});
+
+watch(arriveByMinutes, () => {
+  if (typeof arriveByMinutes.value === 'string') {
+    arriveByMinutes.value = 0;
+  }
+
+  if (arriveByMinutes.value < 0) {
+    arriveByMinutes.value = 0;
+  } else if (arriveByMinutes.value > 59) {
+    arriveByMinutes.value = 59;
+  }
+});
+
 </script>
 
 <template>
   <div class="page-container">
+    <h1>U1 Timetable</h1>
+
+    <h3>Are you at the bus stop?</h3>
     <div class="mode-select">
       <button :class="{ selected: scheduleMode == 0 }" @click="scheduleMode = 0">I'm already here</button>
       <button :class="{ selected: scheduleMode == 1 }" @click="scheduleMode = 1">I'm planning ahead</button>
@@ -89,13 +116,13 @@ const departEarlyEnoughTime = computed(() => {
     <div v-if="scheduleMode === 1">
       <h3>Arrive by</h3>
       <div class="arrive-by">
-        <input type="number" class="arrive-by-hours" placeholder="Hour" min="0" max="23" v-model="arriveByHours">
+        <input type="number" class="arrive-by-hours" placeholder="Hour" min="0" max="23" pattern="\d+" inputmode="numeric" v-model="arriveByHours">
         <span>:</span>
-        <input type="number" class="arrive-by-minutes" placeholder="Minute" min="0" max="59" v-model="arriveByMinutes">
+        <input type="number" class="arrive-by-minutes" placeholder="Minute" min="0" max="59" pattern="\d+" inputmode="numeric" v-model="arriveByMinutes">
       </div>
 
       <template v-if="anyBeforeArrivalTime">
-          <h1 class="result">The latest U1 you can catch to get to {{ currentDestination }} by {{ arriveByHours }}:{{ arriveByMinutes }} is scheduled to leave at <span class="eta">{{ departEarlyEnoughTime }}</span>.</h1>
+          <h1 class="result">The latest U1 you can catch to get to {{ currentDestination }} by {{ timeString({ h: arriveByHours ?? 0, m: arriveByMinutes ?? 0 }) }} is scheduled to leave at <span class="eta">{{ departEarlyEnoughTime }}</span>.</h1>
         </template>
         <template v-else>
           <h1 class="result">There is no scheduled arrival early enough.</h1>

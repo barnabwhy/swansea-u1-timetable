@@ -189,6 +189,7 @@ export function getScheduleFor(dest: Destination): ScheduleEntry[] {
 }
 
 export function timeString(time: Time): string {
+    console.log(time)
     return `${time.h}:${time.m < 10 ? "0" : ""}${time.m}`;
 }
 
