@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Destination, DESTINATIONS, getLastDepartureBefore, getNextDeparture, oppositeOf, timeString, timeUntilDeparture } from './data/schedule';
+import { Destination, DESTINATIONS, getLastDepartureBefore, getNextDeparture, isScheduleEntry, NoBusReason, oppositeOf, timeString, timeUntilDeparture, type ScheduleEntry } from './data/schedule';
 import FullSchedule from './components/FullSchedule.vue';
 
 let scheduleModeMem = ref(parseInt(localStorage.getItem('schedule-mode') ?? '0'));
@@ -35,13 +35,13 @@ const arriveByHours = ref(currentTime.value.getHours());
 const arriveByMinutes = ref(currentTime.value.getMinutes());
 
 const anyMoreRunning = computed(() => {
-  return getNextDeparture(currentDestination.value, currentTime.value) !== null;
+  return isScheduleEntry(getNextDeparture(currentDestination.value, currentTime.value));
 });
 
 const timeUntilNext = computed(() => {
   let dep = getNextDeparture(currentDestination.value, currentTime.value);
 
-  if (dep) {
+  if (isScheduleEntry(dep)) {
     return timeUntilDeparture(dep);
   } else {
     return 'an unknown amount of time';
@@ -49,13 +49,13 @@ const timeUntilNext = computed(() => {
 });
 
 const anyBeforeArrivalTime = computed(() => {
-  return getLastDepartureBefore(currentDestination.value, { h: arriveByHours.value, m: arriveByMinutes.value }) !== null;
+  return isScheduleEntry(getLastDepartureBefore(currentDestination.value, { h: arriveByHours.value, m: arriveByMinutes.value }));
 });
 
 const departEarlyEnoughTime = computed(() => {
   let dep = getLastDepartureBefore(currentDestination.value, { h: arriveByHours.value, m: arriveByMinutes.value });
 
-  if (dep) {
+  if (isScheduleEntry(dep)) {
     return timeString(dep.dep);
   } else {
     return 'an unknown time';
@@ -109,7 +109,8 @@ watch(arriveByMinutes, () => {
         <h1 class="result">The next U1 is scheduled to leave from {{ oppositeOf(currentDestination) }} <span class="eta">{{ timeUntilNext }}</span>.</h1>
       </template>
       <template v-else>
-        <h1 class="result">The U1 is no longer running to {{ currentDestination }} today.</h1>
+        <h1 class="result" v-if="getNextDeparture(currentDestination, currentTime) == NoBusReason.NO_MORE_BUSES">The U1 is no longer running to {{ currentDestination }} today.</h1>
+        <h1 class="result" v-else-if="getNextDeparture(currentDestination, currentTime) == NoBusReason.WEEKEND">The U1 doesn't run at the weekend.</h1>
       </template>
     </div>
 
@@ -125,7 +126,8 @@ watch(arriveByMinutes, () => {
           <h1 class="result">The latest U1 you can catch to get to {{ currentDestination }} by {{ timeString({ h: arriveByHours ?? 0, m: arriveByMinutes ?? 0 }) }} is scheduled to leave at <span class="eta">{{ departEarlyEnoughTime }}</span>.</h1>
         </template>
         <template v-else>
-          <h1 class="result">There is no scheduled arrival early enough.</h1>
+          <h1 class="result"  v-if="getLastDepartureBefore(currentDestination, { h: arriveByHours, m: arriveByMinutes }) == NoBusReason.NO_BUSES_BEFORE">There is no scheduled arrival early enough.</h1>
+          <h1 class="result" v-else-if="getLastDepartureBefore(currentDestination, { h: arriveByHours, m: arriveByMinutes }) == NoBusReason.WEEKEND">The U1 doesn't run at the weekend.</h1>
         </template>
     </div>
 

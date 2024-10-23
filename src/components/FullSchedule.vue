@@ -1,12 +1,12 @@
 <script setup lang="ts">
 
-import { Destination, getScheduleFor, schedule, timeString } from '@/data/schedule';
+import { Destination, getScheduleFor, timeString } from '@/data/schedule';
 
 </script>
 
 <template>
     <div class="full-schedule">
-        <h1>Full Schedule</h1>
+        <h1>Full Schedule (Monday-Friday)</h1>
         <table>
             <thead>
                 <tr>

@@ -10,10 +10,16 @@ interface Time {
     m: number;
 };
 
-interface ScheduleEntry {
+export interface ScheduleEntry {
     dest: Destination;
     dep: Time;
     arr: Time;
+}
+
+export enum NoBusReason {
+    WEEKEND,
+    NO_MORE_BUSES,
+    NO_BUSES_BEFORE,
 }
 
 export const schedule: ScheduleEntry[] = [
@@ -165,9 +171,16 @@ function getOffset(timeZone: string): number {
     return result;
 };
 
-export function getNextDeparture(dest: Destination, now: Date): ScheduleEntry | null {
+export function getNextDeparture(dest: Destination, now: Date): ScheduleEntry | NoBusReason {
     // Correct for timezones
     let timezoneDiff = getOffset("Europe/London") - now.getTimezoneOffset();
+
+    let dayOfWeek = new Date(now.getTime() - timezoneDiff * 60000).getDay();
+
+    if (dayOfWeek >= 6) {
+        // It's the weekend, no buses
+        return NoBusReason.WEEKEND;
+    }
 
     let timezoneDiffHours = Math.floor(timezoneDiff / 60);
     let timezoneDiffMinutes = timezoneDiff % 60;
@@ -187,7 +200,11 @@ export function getNextDeparture(dest: Destination, now: Date): ScheduleEntry | 
     }
 
     // If we get here, there are no more departures today
-    return null;
+    return NoBusReason.NO_MORE_BUSES;
+}
+
+export function isScheduleEntry(entry: any): entry is ScheduleEntry {
+    return !!entry.dest && !!entry.dep && !!entry.arr;
 }
 
 export function timeUntilDeparture(entry: ScheduleEntry): string {
@@ -223,7 +240,18 @@ export function timeString(time: Time): string {
 }
 
 
-export function getLastDepartureBefore(dest: Destination, arriveBy: Time): ScheduleEntry | null {
+export function getLastDepartureBefore(dest: Destination, arriveBy: Time): ScheduleEntry | NoBusReason {
+    // Correct for timezones
+    let now = new Date();
+    let timezoneDiff = getOffset("Europe/London") - now.getTimezoneOffset();
+
+    let dayOfWeek = new Date(now.getTime() - timezoneDiff * 60000).getDay();
+
+    if (dayOfWeek >= 6) {
+        // It's the weekend, no buses
+        return NoBusReason.WEEKEND;
+    }
+
     // Find the last departure
     for (let i = schedule.length - 1; i >= 0; i--) {
         const entry = schedule[i];
@@ -237,5 +265,5 @@ export function getLastDepartureBefore(dest: Destination, arriveBy: Time): Sched
     }
 
     // If we get here, there are no departures before the given time
-    return null;
+    return NoBusReason.NO_BUSES_BEFORE;
 }
